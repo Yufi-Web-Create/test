@@ -1,0 +1,153 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>PLAYFUL ID - 楽しめるWEBサイト</title>
+  <style>
+    :root {
+      --bg:#0a0a0f;
+      --card:#141422;
+      --accent:#78f7d4;
+      --accent2:#f7a8ff;
+      --text:#f8f9ff;
+      --muted:#a8adbf;
+    }
+    *{box-sizing:border-box}
+    body{
+      margin:0;
+      font-family:"Inter","Noto Sans JP",system-ui,sans-serif;
+      background: radial-gradient(circle at 15% 20%, #22224f 0%, var(--bg) 38%), var(--bg);
+      color:var(--text);
+      overflow-x:hidden;
+    }
+    .ticker{
+      white-space:nowrap;
+      overflow:hidden;
+      border-block:1px solid #ffffff22;
+      background:#111;
+      font-weight:700;
+    }
+    .ticker span{
+      display:inline-block;
+      padding:0.8rem 0;
+      animation:slide 16s linear infinite;
+      color:var(--accent);
+      letter-spacing:.08em;
+    }
+    @keyframes slide{from{transform:translateX(0)}to{transform:translateX(-50%)}}
+    header{padding:5rem 6vw 3rem;position:relative}
+    h1{font-size:clamp(2rem,7vw,6rem);margin:0;line-height:1.03;letter-spacing:.04em}
+    .subtitle{max-width:680px;color:var(--muted);font-size:1.1rem}
+    .chips{display:flex;flex-wrap:wrap;gap:.7rem;margin-top:1.5rem}
+    .chip{padding:.45rem .9rem;border:1px solid #ffffff33;border-radius:999px;color:#dbe0ff}
+
+    .grid{
+      display:grid;
+      grid-template-columns:repeat(auto-fit,minmax(230px,1fr));
+      gap:1rem;
+      padding:0 6vw 5rem;
+    }
+    .card{
+      background:linear-gradient(155deg,#1a1a2f,#10101d);
+      border:1px solid #ffffff1f;
+      border-radius:20px;
+      padding:1.2rem;
+      min-height:180px;
+      position:relative;
+      transition:transform .25s ease, box-shadow .25s ease;
+    }
+    .card:hover{transform:translateY(-6px) rotate(-.5deg);box-shadow:0 12px 35px #0007}
+    .card .num{font-size:2rem;font-weight:800;color:var(--accent2)}
+    .card p{color:var(--muted)}
+
+    .playground{padding:0 6vw 6rem;display:grid;gap:1rem;grid-template-columns:1.2fr .8fr}
+    .canvasWrap,.control{
+      background:var(--card);
+      border-radius:20px;
+      border:1px solid #ffffff1a;
+      padding:1rem;
+    }
+    canvas{width:100%;height:340px;border-radius:14px;background:#0b0b14;cursor:crosshair}
+    button{background:var(--accent);border:none;padding:.7rem 1rem;border-radius:999px;font-weight:700;cursor:pointer}
+    .control p{color:var(--muted)}
+    footer{text-align:center;color:#8f95aa;padding:2rem 1rem 4rem}
+    @media (max-width:860px){.playground{grid-template-columns:1fr}}
+  </style>
+</head>
+<body>
+  <div class="ticker"><span>✦ CREATE ✦ PLAY ✦ SHARE ✦ INSPIRE ✦ CREATE ✦ PLAY ✦ SHARE ✦ INSPIRE ✦</span></div>
+
+  <header>
+    <h1>つくるほど、<br>あなたのIDになる。</h1>
+    <p class="subtitle">idid.team の「クリエイティブを発見する楽しさ」をヒントに、見て・触って・遊べる1ページサイトを作りました。カードを眺め、最後はキャンバスに自由に描いて遊んでください。</p>
+    <div class="chips">
+      <div class="chip">#Webデザイン</div>
+      <div class="chip">#インタラクション</div>
+      <div class="chip">#遊び心</div>
+      <div class="chip">#発見</div>
+    </div>
+  </header>
+
+  <section class="grid">
+    <article class="card"><div class="num">01</div><h3>今日のひらめき</h3><p>毎日ひとつ、気になるデザインを見つけよう。</p></article>
+    <article class="card"><div class="num">02</div><h3>サイト図鑑</h3><p>ジャンルを超えて「いい感じ」をストックする。</p></article>
+    <article class="card"><div class="num">03</div><h3>作ってみる</h3><p>インプットの次は、まず手を動かすのが最短ルート。</p></article>
+    <article class="card"><div class="num">04</div><h3>シェアする</h3><p>作ったものを発信すると、次の出会いが生まれる。</p></article>
+  </section>
+
+  <section class="playground">
+    <div class="canvasWrap">
+      <canvas id="paint" width="860" height="340"></canvas>
+    </div>
+    <aside class="control">
+      <h3>らくがきスタジオ</h3>
+      <p>ドラッグして線を描けます。<br>色を変えて遊ぼう！</p>
+      <input type="color" id="color" value="#78f7d4">
+      <input type="range" id="size" min="1" max="24" value="6">
+      <button id="clear">クリア</button>
+    </aside>
+  </section>
+
+  <footer>Inspired by iDID.team / Built for fun ✦</footer>
+
+  <script>
+    const canvas = document.getElementById('paint');
+    const ctx = canvas.getContext('2d');
+    const color = document.getElementById('color');
+    const size = document.getElementById('size');
+    const clearBtn = document.getElementById('clear');
+
+    let drawing = false;
+    let x = 0; let y = 0;
+    const toPos = e => {
+      const r = canvas.getBoundingClientRect();
+      return {x:(e.clientX-r.left)*(canvas.width/r.width), y:(e.clientY-r.top)*(canvas.height/r.height)};
+    };
+
+    const draw = (nx, ny) => {
+      ctx.strokeStyle = color.value;
+      ctx.lineWidth = Number(size.value);
+      ctx.lineCap = 'round';
+      ctx.beginPath();
+      ctx.moveTo(x,y);
+      ctx.lineTo(nx,ny);
+      ctx.stroke();
+      x = nx; y = ny;
+    };
+
+    canvas.addEventListener('pointerdown', e => {
+      drawing = true;
+      const p = toPos(e); x = p.x; y = p.y;
+      canvas.setPointerCapture(e.pointerId);
+    });
+    canvas.addEventListener('pointermove', e => {
+      if(!drawing) return;
+      const p = toPos(e); draw(p.x,p.y);
+    });
+    canvas.addEventListener('pointerup', () => drawing = false);
+    canvas.addEventListener('pointerleave', () => drawing = false);
+    clearBtn.addEventListener('click', () => ctx.clearRect(0,0,canvas.width,canvas.height));
+  </script>
+</body>
+</html>
